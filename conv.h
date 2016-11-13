@@ -1,5 +1,9 @@
+#ifndef _H_CONV
+#define _H_CONV
+
 #include "conv_def.h"
 #include "iplimage.h"
 
-struct feature_map *convfpass(struct IplImage *img, unsigned char *kernel);
+int conv(struct IplImage *img, struct feature_map *fm, struct kernel *kernel);
 
+#endif

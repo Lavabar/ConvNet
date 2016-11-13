@@ -1,6 +1,6 @@
 CC=clang
-NETSRCS=conv.c iplimage.c #relu.c pool.c
-CFLAGS=-Wall -g -lpng12 #-lm #`pkg-config --cflags` 
+NETSRCS=conv.c iplimage.c conv_def.c pool.c relu.c netcreat.c netpass.c netfile.c
+CFLAGS=-Wall -g -lpng12 #-lm 
 NETOBJS=$(NETSRCS:.c=.o)
 
 all: main
@@ -14,11 +14,26 @@ main.o:main.c
 conv.o:conv.c
 	$(CC) $(CFLAGS) -c conv.c
 
-#relu.o:relu.c
-#	$(CC) $(CFLAGS) -c relu.c
+relu.o:relu.c
+	$(CC) $(CFLAGS) -c relu.c
 
-#pool.o:pool.c
-#	$(CC) $(CFLAGS) -c pool.c
+pool.o:pool.c
+	$(CC) $(CFLAGS) -c pool.c
+
+conv_def.o:conv_def.c
+	$(CC) $(CFLAGS) -c conv_def.c
+
+iplimage.o:iplimage.c
+	$(CC) $(CFLAGS) -c iplimage.c
+
+netpass.o:netpass.c
+	$(CC) $(CFLAGS) -c netpass.c
+
+netcreat.o:netcreat.c
+	$(CC) $(CFLAGS) -c netcreat.c
+
+netfile.o:netfile.c
+	$(CC) $(CFLAGS) -c netfile.c 
 
 clean:
 	rm main *.o 

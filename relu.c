@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "conv_def.h"
 
-int *relu(int *img)
+void relu(struct feature_map *fm)
 {
-	int x, y;
+	int i;
 	int w, h;
-	w = img->width;
-	h = img->height;
+	w = fm->w;
+	h = fm->h;
 	
-	for (y = 0; y < h, y++)
-		for (x = 0; x < w, x++)
-			img->data[y * w + x] = max(img->data[y * w + x], 0);	
+	for (i = 0; i < h * w; i++)
+		fm->data[i] = (fm->data[i] > 0)? fm->data[i] : 0;	
 }

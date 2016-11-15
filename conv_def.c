@@ -43,7 +43,7 @@ struct kernel *init_kernels(int n_conv_layers, int n_kernels, int kernel_width)
 		goto exit_failure;	
 	}
 		
-	for (i = 0; i < n_conv_layers; i++)
+	for (i = 0; i < n_kernels; i++)
 		if((res[i].data = (double *)malloc(sizeof(double) * kernel_width * kernel_width)) == NULL) {
 			fprintf(stderr, "error in malloc data\n");
 			goto exit_failure;
@@ -53,9 +53,12 @@ struct kernel *init_kernels(int n_conv_layers, int n_kernels, int kernel_width)
 	srand(time(NULL));
 	for (i = 0; i < n_conv_layers; i++) {
 		res[i].w = kernel_width;
-		for (j = 0; j < res[i].w * res[i].w; i++)
+		for (j = 0; j < res[i].w * res[i].w; j++) {
 			res[i].data[j] = (double)rand() / (double)RAND_MAX * 2.0 - 1.0;
+			//printf("%3.1lf ", res[i].data[j]);
+		}
 	}
+	//printf("\n");
 	return res;
 
 exit_failure:

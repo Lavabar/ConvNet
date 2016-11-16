@@ -1,5 +1,5 @@
 CC=clang
-NETSRCS=conv.c iplimage.c conv_def.c pool.c relu.c netcreat.c netpass.c netfile.c net_errno.c
+NETSRCS=conv.c iplimage.c conv_def.c pool.c relu.c netcreat.c netpass.c netfile.c net_errno.c convpass.c
 CFLAGS=-Wall -g -lpng12 -lm 
 NETOBJS=$(NETSRCS:.c=.o)
 
@@ -37,6 +37,9 @@ netfile.o:netfile.c
 
 net_errno.o:net_errno.c
 	$(CC) $(CFLAGS) -c net_errno.c
+
+convpass.o:convpass.c
+	$(CC) $(CFLAGS) -c convpass.c
 
 clean:
 	rm main *.o 

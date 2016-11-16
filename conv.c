@@ -48,19 +48,21 @@ int conv(struct IplImage *img, struct feature_map *fm, struct kernel *kernel)
 	}
 
 	//convolution with kernel_width=n
-	for (j = 0; j < h - kernel->w + 1; j++)
-		for (i = 0; i < w - kernel->w + 1; i++) {
-			for (y = 0; y < kernel->w; y++)
+	for (j = 0; j < h - ((kernel->w / 2 + 1) * 2); j++) {
+		for (i = 0; i < w - ((kernel->w / 2 + 1) * 2); i++) {
+			for (y = 0; y < kernel->w; y++) {
 				for (x = 0; x < kernel->w; x++) {
 					if ((w * j + i) + y * w + x >= w * h) {
 						fprintf(stderr, "segfault\n");
 						goto exit_failure;
 					}
-					fm->prev_px[g] = (w * j + i) + y * w + x;
-					fm->data[g] += img->data[(w * j + i) + y * w + x] * kernel->data[y * kernel->w + x];
+					fm->prev_px[g] = (j * w + i) + y * w + x;
+					fm->data[g] += img->data[(j * w + i) + y * w + x] * kernel->data[y * kernel->w + x];
 				}
+			}
 			g++;
 		}
+	}
 	return 0;
 
 exit_failure:

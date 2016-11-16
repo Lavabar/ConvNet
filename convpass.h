@@ -5,6 +5,6 @@
 #include "conv_def.h"
 #include "net_structs.h"
 
-double *convfpass(struct IplImage *frame, struct kernel *knls, struct neuronet *net)
+double *convfpass(struct IplImage *frame, struct convnet *cnet, struct neuronet *net);
 
 #endif

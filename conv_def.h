@@ -1,15 +1,21 @@
 #ifndef _H_CONV_DEF
 #define _H_CONV_DEF
 
-struct feature_map{
+struct feature_map {
 	int h;
 	int w;
 	double *data;
 	int *prev_px;
 };
-struct kernel{
+struct kernel {
 	int w;
 	double *data;
+};
+
+struct convnet {
+	int n_kernels;
+	int k_width;
+	struct kernel *knls;
 };
 
 struct feature_map *init_fmaps(int n_fmaps, int w, int h);

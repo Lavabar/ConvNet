@@ -4,8 +4,9 @@
 #include <string.h>
 #include "net_structs.h"
 #include "net_errno.h"
+#include "conv_def.h"
 
-void nettofile(struct neuronet *net, char *path)
+void nettofile(struct neuronet *net, struct convnet *cnet, char *path)
 {
 	int i, j;
 	FILE *f;
@@ -28,13 +29,19 @@ void nettofile(struct neuronet *net, char *path)
 	for (i = 0; i < net->nl; i++)
 		for (j = 0; j < *(net->nn + i) * *(net->nw + i); j++)
 			fprintf(f, "%lf\n", *w++);
+
+	fprintf(f, "%d\n", cnet->n_kernels);
+	fprintf(f, "%d\n", cnet->k_width);
+	for (i = 0; i < cnet->n_kernels; i++)
+		for (j = 0; j < cnet->k_width * cnet->k_width; j++)
+			fprintf(f, "%lf\n", cnet->knls[i].data[j]);	
 	
 	fclose(f);
 }
 
-int netfromfile(struct neuronet *net, char *path)
+int netfromfile(struct neuronet *net, struct convnet *cnet, char *path)
 {
-	int i;
+	int i, j;
 	FILE *f;
 
 	if ((f = fopen(path, "r")) == NULL) {
@@ -69,6 +76,12 @@ int netfromfile(struct neuronet *net, char *path)
 		fscanf(f, "%lf\n", net->w++);
 	
 	net->w -= net->total_nw;
+
+	fscanf(f, "%d\n", &(cnet->n_kernels));
+	fscanf(f, "%d\n", &(cnet->k_width));
+	for (i = 0; i < cnet->n_kernels; i++)
+		for (j = 0; j < cnet->k_width * cnet->k_width; j++)
+			fscanf(f, "%lf\n", &(cnet->knls[i].data[j]));
 
 	fclose(f);
 

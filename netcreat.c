@@ -1,5 +1,6 @@
 #include "net_errno.h"
 #include "net_structs.h"
+#include "conv_def.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +83,29 @@ free_nn:
 	free(res->nn);
 free_net:
 	free(res);
+exit_failure:
+	return NULL;
+}
+
+struct convnet *cnetcreat(int cl, int n, int w)
+{
+	struct convnet *cnet;
+	struct kernel *knls;
+	int i, j;
+
+	if ((cnet = (struct convnet *)malloc(sizeof(struct convnet))) == NULL)
+		fprintf(stderr, "error in malloc convnet\n");
+	cnet->n_kernels = n;
+	cnet->k_width = w;
+	if((knls = init_kernels(cl, n, w)) == NULL) {
+		fprintf(stderr, "error in init kernels\n");
+		goto exit_failure;
+	}
+
+	cnet->knls = knls;
+
+	return cnet;
+
 exit_failure:
 	return NULL;
 }

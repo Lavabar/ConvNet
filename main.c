@@ -12,7 +12,7 @@
 #include "netfile.h"
 
 #define N_CONV_LAYERS 1
-#define N_KERNELS 1    
+#define N_KERNELS 1   
 #define KERNEL_WIDTH 7
 
 #define NEURO_PATH "/home/user/ConvNet/neuro.data"
@@ -31,7 +31,10 @@ int main()
 		goto exit_failure;
 	}
 
-	frame = ipl_readimg("/home/user/3.png", IPL_RGB_MODE);
+	if ((frame = ipl_readimg("/home/user/5.png", IPL_RGB_MODE)) == NULL) {
+		fprintf(stderr, "error reading image\n");
+		goto exit_failure;
+	}
 	if (netfromfile(net, cnet, NEURO_PATH) == -1) {
 		fprintf(stderr, "error reading nets\n");
 		goto exit_failure;

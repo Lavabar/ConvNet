@@ -16,6 +16,8 @@ struct convnet {
 	int n_kernels;
 	int k_width;
 	struct kernel *knls;
+	struct feature_map *fmaps;
+	struct feature_map *pmaps;
 };
 
 struct feature_map *init_fmaps(int n_fmaps, int w, int h);

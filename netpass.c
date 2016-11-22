@@ -39,7 +39,7 @@ exit_failure:
 	return NULL;
 }
 
-int netbpass(struct neuronet *net, double *inp, double *out, double *target, double eta)
+double netbpass(struct neuronet *net, double *inp, double *out, double *target, double eta)
 {
 	double *errors, *w;
 	int i, j, k, m, ne, nl, nn, nw;
@@ -86,7 +86,7 @@ int netbpass(struct neuronet *net, double *inp, double *out, double *target, dou
 			for (j = 0; j < newne; j++, out--) {
 				for (k = 0; k < ne; k++) 
 					*(newerrors - j) += *w-- * (*(errors - k));
-				
+				res = *(newerrors - j);
 				*(newerrors - j) *= *out * (1.0 - *out);
 			}
 			free(errors - ne + 1);
@@ -96,12 +96,12 @@ int netbpass(struct neuronet *net, double *inp, double *out, double *target, dou
 
 	}
 
-	return 0;
+	return res;
 
 free_errors:
 	free(errors);
 exit_failure:
-	return -1;
+	return NULL;
 }
 /*
 void netbpass(struct neuronet *net, double **out, double *target, double eta)

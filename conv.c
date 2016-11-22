@@ -57,7 +57,7 @@ int conv(struct IplImage *img, struct feature_map *fm, struct kernel *kernel)
 						goto exit_failure;
 					}
 					fm->prev_px[g] = (j * w + i) + y * w + x;
-					fm->data[g] += img->data[(j * w + i) + y * w + x] * kernel->data[y * kernel->w + x];
+					fm->data[g] += data[(j * w + i) + y * w + x] * kernel->data[y * kernel->w + x];
 				}
 			}
 			g++;

@@ -29,6 +29,15 @@ exit_failure:
 	return NULL;
 }
 
+static void norm_val(double *data, int k, int max_val)
+{
+	int i;
+	double mv;
+	mv = (double)max_val;
+	for (i = 0; i < k; i++)
+		data[k] = data[k] / mv;	
+}
+
 double *convfpass(struct IplImage *frame, struct convnet *cnet, struct neuronet *net)
 {
 	int i, x, y;
@@ -74,6 +83,7 @@ double *convfpass(struct IplImage *frame, struct convnet *cnet, struct neuronet 
 		fprintf(stderr, "error in connect feature maps\n");
 		goto exit_failure;
 	}
+	norm_val(data, cnet->fmaps->w * cnet->fmaps->h * cnet->n_kernels, cnet->k_width * cnet->k_width);
 	out = netfpass(net, data);
 	
 	for (y = 0; y < cnet->pmaps[0].h * cnet->n_kernels; y++) {
@@ -91,7 +101,19 @@ exit_failure:
 
 }
 
-int convbpass(struct conv net *cnet, double *out, double *target, double eta)
+int convbpass(struct convnet *cnet, double *c_er, double eta)
 {
+	double *errors;
+	int i;
+
 	
+	for (i = 0; i < cnet->n_kernels; i++) {
+		errors = (double *)malloc(sizeof(double) * cnet->n_kernels * cnet->fmaps->w * cnet->fmaps->h);
+		for (j = 0; j < cnet->fmaps->h * cnet->fmaps->w; j++)
+			errors[i * cnet->fmaps->w * cnet->fmaps->h + j] = cnet->fmaps[i].data[j] * (1 - cnet->fmaps[i].data[j]) * c_er[i]; 
+		
+		free(errors);
+	}
+
+	return 0;
 }

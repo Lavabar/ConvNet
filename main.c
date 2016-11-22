@@ -30,23 +30,15 @@ int main()
 		fprintf(stderr, "error initing kernels\n");
 		goto exit_failure;
 	}
-
-	if ((frame = ipl_readimg("/home/user/5.png", IPL_RGB_MODE)) == NULL) {
-		fprintf(stderr, "error reading image\n");
-		goto exit_failure;
-	}
 	if (netfromfile(net, cnet, NEURO_PATH) == -1) {
 		fprintf(stderr, "error reading nets\n");
 		goto exit_failure;
 	}
 	
-	/*int nn[] = {100, 1};	
-	if((cnet = cnetcreat(N_CONV_LAYERS, N_KERNELS, KERNEL_WIDTH)) == NULL) {
-		fprintf(stderr, "error in init convnet\n");
+	if ((frame = ipl_readimg("/home/user/5.png", IPL_RGB_MODE)) == NULL) {
+		fprintf(stderr, "error reading image\n");
 		goto exit_failure;
 	}
-	net = netcreat(2, nn, ((frame->width - ((KERNEL_WIDTH / 2 + 1) * 2)) / 2) * ((frame->height - ((KERNEL_WIDTH / 2 + 1) * 2)) / 2) * N_KERNELS);
-	nettofile(net, cnet, NEURO_PATH);*/
 
 	out = convfpass(frame, cnet, net);		
 	printf("out = %lf\n", *(out));	

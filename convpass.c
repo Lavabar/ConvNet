@@ -101,18 +101,32 @@ exit_failure:
 
 }
 
-int convbpass(struct convnet *cnet, double *c_er, double eta)
+int convbpass(struct convnet *cnet, double *c_er, struct data *inp, double eta)
 {
-	double *errors;
-	int i;
-
+	double error;
+	int i, j, k, x, y, u, v;
+	int w, h;
+	w = inp->w;
+	h = inp->h;
+	k = 1;
 	
-	for (i = 0; i < cnet->n_kernels; i++) {
-		errors = (double *)malloc(sizeof(double) * cnet->n_kernels * cnet->fmaps->w * cnet->fmaps->h);
-		for (j = 0; j < cnet->fmaps->h * cnet->fmaps->w; j++)
-			errors[i * cnet->fmaps->w * cnet->fmaps->h + j] = cnet->fmaps[i].data[j] * (1 - cnet->fmaps[i].data[j]) * c_er[i]; 
-		
-		free(errors);
+	for (u = 0; u < cnet->n_kernels; u++) {
+		for (v = 0; v < cnet->fmaps->h * cnet->fmaps->w; v++) {
+			error = cnet->fmaps[u].data[v] * (1 - cnet->fmaps[u].data[v]) * c_er[u]; 
+			for (y = 0; y < cnet->kernel_w; y++) {
+				for (x = 0; x < cnet->kernel_w; x++) {
+					double sum = cnet->knls[u].data[y * cnet->kernel_w + x];
+					for (j = 0; j < h - ((cnet->kernel_w / 2 + 1) * 2); j++) {
+						for (i = 0; i < w - ((cnet->kernel_w / 2 + 1) * 2); i++) {
+							sum += cnet->knls[u].data[y * cnet->kernel_w + x] + error * inp->data[(j * w + i) + y * w + x] * eta;
+							k++;
+						}
+					}
+					knls[u].data[y * cnet->kernel_w + x] = sum / k;
+					k = 1;
+				}
+			}
+		}
 	}
 
 	return 0;

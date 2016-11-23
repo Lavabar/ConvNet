@@ -5,11 +5,11 @@ struct feature_map {
 	int h;
 	int w;
 	double *data;
-	int *prev_px;
 };
 struct kernel {
 	int w;
 	double *data;
+	int *inp;
 };
 
 struct convnet {
@@ -18,6 +18,12 @@ struct convnet {
 	struct kernel *knls;
 	struct feature_map *fmaps;
 	struct feature_map *pmaps;
+};
+
+struct data {
+	int w;
+	int h;
+	double *data;
 };
 
 struct feature_map *init_fmaps(int n_fmaps, int w, int h);

@@ -50,7 +50,7 @@ double netbpass(struct neuronet *net, double *inp, double *out, double *target, 
 	out += net->total_nn - 1;
 	w = net->w + net->total_nw - 1;
 	inp += net->nw[0] - 1;
-
+	res = *(double)malloc();
 	if ((errors = (double *)malloc(sizeof(double) * ne)) == NULL) {
 		net_errno = NET_ENOMEM;
 		goto exit_failure;

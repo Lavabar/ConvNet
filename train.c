@@ -5,10 +5,11 @@
 
 #define NEURO_PATH "/home/user/ConvNet/neuro.data"
 
-#define sample_path "/home/user/convnet/samples"
-#define sample_cnt 156	
-#define sample_size 400
-#define
+#define SAMPLE_PATH "/home/user/convnet/samples"
+#define SAMPLE_CNT 156	
+#define SAMPLE_SIZE 400
+#define SAMPLE_WIDTH 50
+#define SAMPLE_HEIGHT 20
 
 #define ETA 0.01
 
@@ -88,6 +89,7 @@ int main()
 	double *out;
 	struct neuronet *net;
 	struct convnet *cnet;
+	struct data *inp;
 
 	net = (struct neuronet *)malloc(sizeof(struct neuronet));
 	cnet = (struct convnet *)malloc(sizeof(struct convnet));
@@ -133,6 +135,8 @@ int main()
 		*(idxes + i) = i;
 		ipl_freeimg(&img);
 	}
+	inp->w = SAMPLE_WIDTH;
+	inp->h = SAMPLE_HEIGHT;
 	double error;
 	do { //while(error > 0.018/*isguncor != CNTGUNS || notguncor != CNTNOTGUNS*/) {
 		//isguncor = isgunincor = notguncor = notgunincor = 0;
@@ -168,8 +172,9 @@ int main()
 				isgunincor++;
 			*/
 			data = connect_fm(cnet->pmaps, cnet->n_kernels);
+			inp->data = (examples + idx)->data;
 			c_er = netbpass(net, data, out, (examples + idx)->target, ETA);
-			convbpass(cnet, &c_er, ETA);
+			convbpass(cnet, &c_er, inp, ETA);
 			//getchar();	
 			free(out);
 			free(data);
@@ -187,7 +192,7 @@ int main()
 		shufflearr(idxes, TOTAL);
 		printf("error = %lf\n", (error / TOTAL / 2));
 		//printf("isguncor = %d isgunincor = %d    notguncor = %d  notgunincor = %d\n", isguncor, isgunincor, notguncor, notgunincor);
-		nettofile(net, NEURO_PATH);
+		//nettofile(net, NEURO_PATH);
 
 	} while((error / TOTAL / 2) > 0.02);
 

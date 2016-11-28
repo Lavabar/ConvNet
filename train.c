@@ -1,20 +1,30 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <math.h>
 #include "conv_def.h"
-#include "netpass.c"
-#include "convpass.c"
+#include "netpass.h"
+#include "netfile.h"
+#include "iplimage.h"
+#include "ipldefs.h"
 
 #define NEURO_PATH "/home/user/ConvNet/neuro.data"
 
 #define SAMPLE_PATH "/home/user/convnet/samples"
 #define SAMPLE_CNT 156	
-#define SAMPLE_SIZE 400
+#define SAMPLE_SIZE 1000
 #define SAMPLE_WIDTH 50
 #define SAMPLE_HEIGHT 20
 
+#define NONSAMPLE_PATH "/home/user/convnet/nonsamples"
+#define NONSAMPLE_CNT 141	
+
 #define ETA 0.01
 
+#define TOTAL (SAMPLE_CNT + NONSAMPLE_CNT)
+
 #define N_CONV_LAYERS 1
-#define N_KERNELS 1   
+#define N_KERNELS 3   
 #define KERNEL_WIDTH 7
 
 struct sample {
@@ -61,13 +71,13 @@ static double *connect_fm(struct feature_map *fm, int n)
 	double *res;
 	int i, j, g;
 	g = 0;
-	if ((res = (double *)malloc(sizeof(double) * n * fm[0].w * fm[0].h)) == NULL) {
+	if ((res = (double *)malloc(sizeof(double) * n * fm->w * fm->h)) == NULL) {
 		fprintf(stderr, "error in malloc res\n");
 		goto exit_failure;	
 	}
 
 	for (i = 0; i < n; i++)
-		for (j = 0; j < fm[i].w * fm[i].h; j++)
+		for (j = 0; j < fm->w * fm->h; j++)
 			res[g++] = fm[i].data[j];
 
 	return res;
@@ -78,18 +88,23 @@ exit_failure:
 
 int main()
 {
-	/*int nn[] = {100, 1};	
+	/*int nl = 1;
+	int nn[] = {2};	
 	if((cnet = cnetcreat(N_CONV_LAYERS, N_KERNELS, KERNEL_WIDTH)) == NULL) {
 		fprintf(stderr, "error in init convnet\n");
 		goto exit_failure;
 	}
-	net = netcreat(2, nn, ((frame->width - ((KERNEL_WIDTH / 2 + 1) * 2)) / 2) * ((frame->height - ((KERNEL_WIDTH / 2 + 1) * 2)) / 2) * N_KERNELS);
+	net = netcreat(nl, nn, ((frame->width - ((KERNEL_WIDTH / 2 + 1) * 2)) / 2) * ((frame->height - ((KERNEL_WIDTH / 2 + 1) * 2)) / 2) * N_KERNELS);
 	nettofile(net, cnet, NEURO_PATH);*/
 	struct IplImage *img;
+	char name[256];
 	double *out;
 	struct neuronet *net;
 	struct convnet *cnet;
-	struct data *inp;
+	struct data *inp, *imgs;
+	struct sample *examples;
+	int *idxes;
+	int i;
 
 	net = (struct neuronet *)malloc(sizeof(struct neuronet));
 	cnet = (struct convnet *)malloc(sizeof(struct convnet));
@@ -101,8 +116,10 @@ int main()
 		fprintf(stderr, "error reading nets\n");
 		goto exit_failure;
 	}
-
+	
+	inp = (struct data *)malloc(sizeof(struct data));
 	examples = (struct sample *)malloc(sizeof(struct sample) * TOTAL);
+	imgs = (struct data *)malloc(sizeof(struct data) * TOTAL);
 	idxes = (int *)malloc(sizeof(int) * TOTAL);	
 	
 	for (i = 0; i < SAMPLE_CNT; i++) {
@@ -116,6 +133,9 @@ int main()
 		(examples + i)->data = getdata(img);
 		(examples + i)->target[0] = 1.0;	
 		(examples + i)->target[1] = 0.0;	
+		imgs[i].data = (examples + i)->data;
+		imgs[i].w = img->width;
+		imgs[i].h = img->height;
 		
 		*(idxes + i) = i;
 		ipl_freeimg(&img);
@@ -131,7 +151,10 @@ int main()
 		(examples + i)->data = getdata(img);
 		(examples + i)->target[0] = 0.0;	
 		(examples + i)->target[1] = 1.0;	
-
+		imgs[i].data = (examples + i)->data;
+		imgs[i].w = img->width;
+		imgs[i].h = img->height;
+		
 		*(idxes + i) = i;
 		ipl_freeimg(&img);
 	}
@@ -146,7 +169,7 @@ int main()
 			double isgun_val, isnotgun_val;
 			double *data;
 			idx = *(idxes + i);
-			out = convfpass((examples + idx)->data, cnet, net);
+			out = convfpass(imgs + i, cnet, net);
 
 			isgun_val = *(out + net->total_nn - 2);		
 			isnotgun_val = *(out + net->total_nn - 1);		
@@ -173,8 +196,10 @@ int main()
 			*/
 			data = connect_fm(cnet->pmaps, cnet->n_kernels);
 			inp->data = (examples + idx)->data;
-			c_er = netbpass(net, data, out, (examples + idx)->target, ETA);
-			convbpass(cnet, &c_er, inp, ETA);
+			if (netbpass(net, data, out, (examples + idx)->target, cnet, inp, ETA) == -1) {
+				fprintf(stderr, "error in backpass\n");
+				goto exit_failure;
+			}
 			//getchar();	
 			free(out);
 			free(data);
@@ -196,5 +221,8 @@ int main()
 
 	} while((error / TOTAL / 2) > 0.02);
 
-	return 0;	
+	return 0;
+	
+exit_failure:
+	return -1;	
 }

@@ -91,7 +91,6 @@ struct convnet *cnetcreat(int cl, int n, int w)
 {
 	struct convnet *cnet;
 	struct kernel *knls;
-	int i, j;
 
 	if ((cnet = (struct convnet *)malloc(sizeof(struct convnet))) == NULL)
 		fprintf(stderr, "error in malloc convnet\n");

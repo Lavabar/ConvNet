@@ -6,7 +6,7 @@
 #include "iplvideo.h"
 #include "ipldefs.h"
 #include "conv_def.h"
-#include "convpass.h"
+#include "netpass.h"
 #include "net_structs.h"
 #include "netcreat.h"
 #include "netfile.h"

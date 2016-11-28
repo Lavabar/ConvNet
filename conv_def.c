@@ -37,7 +37,7 @@ void free_fm(struct feature_map *fm)
 struct kernel *init_kernels(int n_conv_layers, int n_kernels, int kernel_width)
 {
 	struct kernel *res;
-	int i, j;
+	int i;
 	if((res = (struct kernel *)malloc(sizeof(struct kernel) * n_conv_layers * n_kernels)) == NULL) {
 		fprintf(stderr, "error in malloc res\n");
 		goto exit_failure;	

@@ -3,7 +3,7 @@ NETSRCS=conv.c iplimage.c conv_def.c pool.c relu.c netcreat.c netpass.c netfile.
 CFLAGS=-Wall -g -lpng12 -lm 
 NETOBJS=$(NETSRCS:.c=.o)
 
-all: train #main
+all: train test #main
 
 #main: $(NETOBJS) main.o
 #	$(CC) $(CFLAGS) -o main main.o $(NETOBJS)
@@ -11,11 +11,17 @@ all: train #main
 train: $(NETOBJS) train.o
 	$(CC) $(CFLAGS) -o train train.o $(NETOBJS)
 
+test: $(NETOBJS) test.o
+	$(CC) $(CFLAGS) -o test test.o $(NETOBJS)
+
 #main.o:main.c
 #	$(CC) $(CFLAGS) -c main.c
 
 train.o:train.c
 	$(CC) $(CFLAGS) -c train.c
+
+test.o:test.c
+	$(CC) $(CFLAGS) -c test.c
 
 conv.o:conv.c
 	$(CC) $(CFLAGS) -c conv.c
@@ -45,4 +51,4 @@ net_errno.o:net_errno.c
 	$(CC) $(CFLAGS) -c net_errno.c
 
 clean:
-	rm train *.o #main
+	rm train test *.o #main

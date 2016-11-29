@@ -35,7 +35,9 @@ double *netfpass(struct neuronet *net, double *inp)
 			//printf("w = %lf\n", *w);
 			for (k = 0; k < nw; k++) 
 				sum += (*w++) * inp[k];
+			//printf("sum = %lf\n", sum);
 			*out++ = 1.0 / (1.0 + exp(-sum));
+			//printf("out = %lf\n", *(out - 1));
 		}
  
 		inp = out - net->nn[i];
@@ -69,13 +71,11 @@ exit_failure:
 	return NULL;
 }
 
-static void norm_val(double *data, int k, int max_val)
+static void norm_val(double *data, int k, double max_val)
 {
 	int i;
-	double mv;
-	mv = (double)max_val;
 	for (i = 0; i < k; i++)
-		data[k] = data[k] / mv;	
+		data[i] = (double)data[i] / (double)max_val;	
 }
 
 
@@ -132,40 +132,44 @@ int netbpass(struct neuronet *net, double *inp, double *out, double *target, str
 			free(errors - ne + 1);
 			errors = newerrors;
 			ne = newne;
-		}
-		if (i == 0) {
-			int newne;
-			double *newerrors;
-
-			newne = net->nw[i];
+		} else {
+			newne = net->nw[i] / cnet->n_kernels;
 			if ((newerrors = (double *)calloc(newne, sizeof(double))) == NULL) {
 				net_errno = NET_ENOMEM;
 				goto free_errors;
 			}
 			newerrors += newne - 1; 
-			for (j = 0; j < newne; j++, out--) {
+			for (j = 0; j < newne / cnet->n_kernels; j++, out--) {
 				for (k = 0; k < ne; k++) 
 					*(newerrors - j) += *w-- * (*(errors - k));
 			}
 			free(errors - ne + 1);
-	
+			errors = newerrors;
+			ne = newne;	
 		}
 	}
-	errors = (double *)malloc(sizeof(double) * cnet->n_kernels * cnet->fmaps->w * cnet->fmaps->h);
+	newerrors = (double *)malloc(sizeof(double) * cnet->n_kernels * cnet->fmaps->w * cnet->fmaps->h);
 	for (i = 0; i < cnet->n_kernels; i++)
-		for (y = 0; y < cnet->fmaps->h; y += 2)
-			for (x = 0; x < cnet->fmaps->w; x += 2)
-				for (u = y; u < y + 2; u++)
+		for (y = 0; y < cnet->fmaps->h; y++)
+			for (x = 0; x < cnet->fmaps->w; x++) {
+				newerrors[y * cnet->fmaps->w + x] = cnet->fmaps[i].data[y * cnet->fmaps->w + x] * (1.0 - cnet->fmaps[i].data[y * cnet->fmaps->w + x]) * errors[i];
+				printf("%lf | %lf ///", newerrors[y * cnet->fmaps->w + x], errors[i]);
+			}
+			printf("\n");
+				/*for (u = y; u < y + 2; u++)
 					for (v = x; v < x + 2; v++)
-						errors[y * cnet->fmaps->w + x] = newerrors[(y / 2) * cnet->pmaps->w + (x / 2)] * cnet->fmaps[i].data[u * cnet->fmaps->w + v] * (1.0 - cnet->fmaps[i].data[u * cnet->fmaps->w + v]);
+						newerrors[y * cnet->fmaps->w + x] *= errors[(y / 2) * cnet->pmaps->w + (x / 2)];
+			}*/
 	for (i = 0; i < cnet->n_kernels; i++)
 		for (y = 0; y < cnet->knls->w; y++)
 			for (x = 0; x < cnet->knls->w; x++) {
 				sum = cnet->knls[i].data[y * cnet->k_width + x];
 				k = 1;
-				for (u = y, g = 0; y + u < src->h - ((cnet->k_width / 2 + 1) * 2); u++)
-					for (v = x; x + src->w - ((cnet->k_width / 2 + 1) * 2); v++, g++)
+				for (u = y, g = 0; u < y + (src->h - ((cnet->k_width / 2) * 2)); u++)
+					for (v = x; v < x + (src->w - ((cnet->k_width / 2) * 2)); v++, g++) {
 						sum += cnet->knls[i].data[y * cnet->k_width + x] + src->data[u * src->w + v] * errors[g] * eta;
+						k++;
+					}
 				cnet->knls[i].data[y * cnet->k_width + x] = sum / k;
 			}
 
@@ -193,11 +197,11 @@ double *convfpass(struct data *frame, struct convnet *cnet, struct neuronet *net
 		}
 		printf("\n");
 	}
-	if((cnet->fmaps = init_fmaps(cnet->n_kernels, frame->w - cnet->k_width - 1, frame->h - cnet->k_width - 1)) == NULL) {
+	if((cnet->fmaps = init_fmaps(cnet->n_kernels, frame->w - (cnet->k_width / 2 * 2), frame->h - (cnet->k_width / 2 * 2))) == NULL) {
 		fprintf(stderr, "error in init fmaps\n");
 		goto exit_failure;
 	}
-	if((cnet->pmaps = init_fmaps(cnet->n_kernels, (frame->w - cnet->k_width - 1) / 2, (frame->h - cnet->k_width - 1) / 2)) == NULL) {
+	if((cnet->pmaps = init_fmaps(cnet->n_kernels, (frame->w - (cnet->k_width / 2 * 2)) / 2, (frame->h - (cnet->k_width / 2 * 2)) / 2)) == NULL) {
 		fprintf(stderr, "error in init pooled_maps");
 		goto exit_failure;
 	}
@@ -225,12 +229,12 @@ double *convfpass(struct data *frame, struct convnet *cnet, struct neuronet *net
 		fprintf(stderr, "error in connect feature maps\n");
 		goto exit_failure;
 	}
-	norm_val(data, cnet->fmaps->w * cnet->fmaps->h * cnet->n_kernels, cnet->k_width * cnet->k_width);
+	norm_val(data, cnet->pmaps->w * cnet->pmaps->h * cnet->n_kernels, (double)(cnet->k_width * cnet->k_width));
 	out = netfpass(net, data);
 	
-	for (y = 0; y < cnet->pmaps[0].h * cnet->n_kernels; y++) {
-		for (x = 0; x < cnet->pmaps[0].w; x++)
-			printf("%3.1lf  ", data[y * cnet->pmaps[0].w + x]);
+	for (y = 0; y < cnet->pmaps->h * cnet->n_kernels; y++) {
+		for (x = 0; x < cnet->pmaps->w; x++)
+			printf("%3.1lf  ", data[y * cnet->pmaps->w + x]);
 		printf("\n");
 	}
 		

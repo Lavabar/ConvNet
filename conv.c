@@ -12,8 +12,8 @@ int conv(struct data *img, struct feature_map *fm, struct kernel *kernel)
 	g = 0;
 	
 	//convolution with kernel_width=n
-	for (j = 0; j < h - ((kernel->w / 2 + 1) * 2); j++) {
-		for (i = 0; i < w - ((kernel->w / 2 + 1) * 2); i++) {
+	for (j = 0; j < h - ((kernel->w / 2) * 2); j++) {
+		for (i = 0; i < w - ((kernel->w / 2) * 2); i++) {
 			for (y = 0; y < kernel->w; y++) {
 				for (x = 0; x < kernel->w; x++) {
 					if ((w * j + i) + y * w + x >= w * h) {

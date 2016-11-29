@@ -37,7 +37,7 @@ void free_fm(struct feature_map *fm)
 struct kernel *init_kernels(int n_conv_layers, int n_kernels, int kernel_width)
 {
 	struct kernel *res;
-	int i;
+	int i, j;
 	if((res = (struct kernel *)malloc(sizeof(struct kernel) * n_conv_layers * n_kernels)) == NULL) {
 		fprintf(stderr, "error in malloc res\n");
 		goto exit_failure;	
@@ -52,7 +52,7 @@ struct kernel *init_kernels(int n_conv_layers, int n_kernels, int kernel_width)
 	for (i = 0; i < n_conv_layers; i++) 
 		res[i].w = kernel_width;
 	/*srand(time(NULL));
-	for (i = 0; i < n_conv_layers; i++) {
+	for (i = 0; i < n_kernels; i++) {
 		res[i].w = kernel_width;
 		for (j = 0; j < res[i].w * res[i].w; j++) {
 			res[i].data[j] = (double)rand() / (double)RAND_MAX * 2.0 - 1.0;

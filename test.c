@@ -44,19 +44,19 @@ static double *getdata(struct IplImage *img)
 	return data;
 }
 
-static double *connect_fm(struct feature_map *fm, int n)
+static double *connect_fm(struct convnet *cnet)
 {
 	double *res;
 	int i, j, g;
 	g = 0;
-	if ((res = (double *)malloc(sizeof(double) * n * fm->w * fm->h)) == NULL) {
+	if ((res = (double *)malloc(sizeof(double) * cnet->n_kernels * cnet->pmaps->w * cnet->pmaps->h)) == NULL) {
 		fprintf(stderr, "error in malloc res\n");
 		goto exit_failure;	
 	}
 
-	for (i = 0; i < n; i++)
-		for (j = 0; j < fm->w * fm->h; j++)
-			res[g++] = fm[i].data[j];
+	for (i = 0; i < cnet->n_kernels; i++)
+		for (j = 0; j < cnet->pmaps->w * cnet->pmaps->h; j++)
+			res[g++] = cnet->pmaps[i].data[j] / (cnet->k_width * cnet->k_width);
 
 	return res;
 
@@ -128,7 +128,7 @@ int main()
 	val = *(out);
 	printf("out = %lf\n", val);
 	double *data;
-	data = connect_fm(cnet->pmaps, cnet->n_kernels);
+	data = connect_fm(cnet);
 	if (netbpass(net, data, out, &(examples->target), cnet, imgs, ETA) == -1) {
 		fprintf(stderr, "error in backpass\n");
 		goto exit_failure;

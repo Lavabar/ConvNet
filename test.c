@@ -14,7 +14,7 @@
 #define ETA 1.0
 
 #define N_CONV_LAYERS 1
-#define N_KERNELS 1   
+#define N_KERNELS 2   
 #define KERNEL_WIDTH 3
 
 #define SAMPLE_WIDTH 4
@@ -56,7 +56,7 @@ static double *connect_fm(struct convnet *cnet)
 
 	for (i = 0; i < cnet->n_kernels; i++)
 		for (j = 0; j < cnet->pmaps->w * cnet->pmaps->h; j++)
-			res[g++] = cnet->pmaps[i].data[j] / (cnet->k_width * cnet->k_width);
+			res[g++] = cnet->pmaps[i].data[j];
 
 	return res;
 
@@ -73,7 +73,7 @@ int main()
 	struct convnet *cnet;
 	struct data *inp, *imgs;
 	struct sample *examples;
-	int i, j;
+	int i, j, k;
 
 	net = (struct neuronet *)malloc(sizeof(struct neuronet));
 	cnet = (struct convnet *)malloc(sizeof(struct convnet));
@@ -134,15 +134,18 @@ int main()
 		goto exit_failure;
 	}
 	printf("\n");
-	for (i = 0; i < cnet->k_width; i++) {
-		for (j = 0; j < cnet->k_width; j++)
-			printf("%lf ", cnet->knls->data[i * cnet->k_width + j]);
+	for (k = 0; k < cnet->n_kernels; k++) {
+		for (i = 0; i < cnet->k_width; i++) {
+			for (j = 0; j < cnet->k_width; j++)
+				printf("%lf ", cnet->knls[k].data[i * cnet->k_width + j]);
+			printf("\n");
+		}
 		printf("\n");
 	}
 	//getchar();	
 	free(out);
 	free(data);
-	
+	//nettofile(net, cnet, NEURO_PATH);
 	return 0;
 
 exit_failure:

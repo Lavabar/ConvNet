@@ -10,10 +10,11 @@ int conv(struct data *img, struct feature_map *fm, struct kernel *kernel)
 	w = img->w;
 	h = img->h;
 	g = 0;
-	
+	printf("here\n");	
 	//convolution with kernel_width=n
 	for (j = 0; j < h - ((kernel->w / 2) * 2); j++) {
 		for (i = 0; i < w - ((kernel->w / 2) * 2); i++) {
+			fm->data[g] = 0;
 			for (y = 0; y < kernel->w; y++) {
 				for (x = 0; x < kernel->w; x++) {
 					if ((w * j + i) + y * w + x >= w * h) {
@@ -23,6 +24,7 @@ int conv(struct data *img, struct feature_map *fm, struct kernel *kernel)
 					fm->data[g] += img->data[(j * w + i) + y * w + x] * kernel->data[y * kernel->w + x];
 				}
 			}
+			fm->data[g] /= (kernel->w * kernel->w);
 			g++;
 		}
 	}

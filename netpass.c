@@ -56,7 +56,7 @@ static double *connect_fm(struct feature_map *fm, int n)
 	double *res;
 	int i, j, g;
 	g = 0;
-	if ((res = (double *)malloc(sizeof(double) * n * fm[0].w * fm[0].h)) == NULL) {
+	if ((res = (double *)malloc(sizeof(double) * n * fm->w * fm->h)) == NULL) {
 		fprintf(stderr, "error in malloc res\n");
 		goto exit_failure;	
 	}
@@ -85,7 +85,7 @@ int netbpass(struct neuronet *net, double *inp, double *out, double *target, str
 	int i, j, k, m, ne, nl, nn, nw;
 	int x, y, g, u, v;
 	double sum;
-	
+		
 	int newne;
 	double *newerrors;
 	
@@ -133,41 +133,42 @@ int netbpass(struct neuronet *net, double *inp, double *out, double *target, str
 			errors = newerrors;
 			ne = newne;
 		} else {
-			newne = net->nw[i] / cnet->n_kernels;
+			newne = net->nw[i];
 			if ((newerrors = (double *)calloc(newne, sizeof(double))) == NULL) {
 				net_errno = NET_ENOMEM;
 				goto free_errors;
 			}
 			newerrors += newne - 1; 
-			for (j = 0; j < newne / cnet->n_kernels; j++, out--) {
+			for (j = 0; j < newne; j++, out--) {
 				for (k = 0; k < ne; k++) 
 					*(newerrors - j) += *w-- * (*(errors - k));
 			}
 			free(errors - ne + 1);
-			errors = newerrors;
+			errors = newerrors - newne + 1;
 			ne = newne;	
 		}
 	}
-	newerrors = (double *)malloc(sizeof(double) * cnet->n_kernels * cnet->fmaps->w * cnet->fmaps->h);
-	for (i = 0; i < cnet->n_kernels; i++)
-		for (y = 0; y < cnet->fmaps->h; y++)
-			for (x = 0; x < cnet->fmaps->w; x++) {
-				newerrors[y * cnet->fmaps->w + x] = cnet->fmaps[i].data[y * cnet->fmaps->w + x] * (1.0 - cnet->fmaps[i].data[y * cnet->fmaps->w + x]) * errors[i];
-				printf("%lf | %lf ///", newerrors[y * cnet->fmaps->w + x], errors[i]);
-			}
-			printf("\n");
-				/*for (u = y; u < y + 2; u++)
-					for (v = x; v < x + 2; v++)
-						newerrors[y * cnet->fmaps->w + x] *= errors[(y / 2) * cnet->pmaps->w + (x / 2)];
-			}*/
+	newne = cnet->n_kernels * cnet->fmaps->w * cnet->fmaps->h;
+	newerrors = (double *)malloc(sizeof(double) * newne);
+	for (i = 0, g = 0, j = 0; i < cnet->n_kernels; i++) {
+		for (y = 0; y < cnet->fmaps->h - 1; y += 2)
+			for (x = 0; x < cnet->fmaps->w - 1; x += 2, j++)
+				for (v = y; v < y + 2; v++)
+					for (u = x; u < x + 2; u++, g++) {
+						newerrors[g] = cnet->fmaps[i].data[v * cnet->fmaps->w + u] * (1.0 - cnet->fmaps[i].data[v * cnet->fmaps->w + u]) * errors[j];
+						printf("%lf | %lf /// ", newerrors[g], errors[j]);
+					}
+		printf("\n");
+	}
+	sum = 0;
 	for (i = 0; i < cnet->n_kernels; i++)
 		for (y = 0; y < cnet->knls->w; y++)
 			for (x = 0; x < cnet->knls->w; x++) {
 				sum = cnet->knls[i].data[y * cnet->k_width + x];
 				k = 1;
-				for (u = y, g = 0; u < y + (src->h - ((cnet->k_width / 2) * 2)); u++)
+				for (u = y, g = i * (newne / cnet->n_kernels); u < y + (src->h - ((cnet->k_width / 2) * 2)); u++)
 					for (v = x; v < x + (src->w - ((cnet->k_width / 2) * 2)); v++, g++) {
-						sum += cnet->knls[i].data[y * cnet->k_width + x] + src->data[u * src->w + v] * errors[g] * eta;
+						sum += cnet->knls[i].data[y * cnet->k_width + x] + src->data[u * src->w + v] * newerrors[g] * eta;
 						k++;
 					}
 				cnet->knls[i].data[y * cnet->k_width + x] = sum / k;
@@ -209,17 +210,16 @@ double *convfpass(struct data *frame, struct convnet *cnet, struct neuronet *net
 	//ipl_scaleimg(&frame, 25, 10);
 	
 	for (i = 0; i < cnet->n_kernels; i++) {
-		if(conv(frame, &(cnet->fmaps[i]), &(cnet->knls[i]))) {
+		if(conv(frame, &(cnet->fmaps[i]), &(cnet->knls[i])) == -1) {
 			fprintf(stderr, "error in convolution\n");
 			goto exit_failure;
 		}
-		for (y = 0; y < cnet->fmaps[i].h; y++) {
-			for (x = 0; x < cnet->fmaps[i].w; x++)
-				printf("%3.1lf ", cnet->fmaps[i].data[y * cnet->fmaps[i].w + x]);
+		for (y = 0; y < cnet->fmaps->h; y++) {
+			for (x = 0; x < cnet->fmaps->w; x++)
+				printf("%3.1lf ", cnet->fmaps[i].data[y * cnet->fmaps->w + x]);
 			printf("\n");
 		}
-		printf("\n");
-		if(pool(&(cnet->fmaps[i]), &(cnet->pmaps[i]))) {
+		if(pool(&(cnet->fmaps[i]), &(cnet->pmaps[i])) == -1) {
 			fprintf(stderr, "error in pooling\n");
 			goto exit_failure;
 		}
@@ -229,9 +229,10 @@ double *convfpass(struct data *frame, struct convnet *cnet, struct neuronet *net
 		fprintf(stderr, "error in connect feature maps\n");
 		goto exit_failure;
 	}
-	norm_val(data, cnet->pmaps->w * cnet->pmaps->h * cnet->n_kernels, (double)(cnet->k_width * cnet->k_width));
+	//norm_val(data, cnet->pmaps->w * cnet->pmaps->h * cnet->n_kernels, (double)(cnet->k_width * cnet->k_width));
 	out = netfpass(net, data);
 	
+	printf("\n");
 	for (y = 0; y < cnet->pmaps->h * cnet->n_kernels; y++) {
 		for (x = 0; x < cnet->pmaps->w; x++)
 			printf("%3.1lf  ", data[y * cnet->pmaps->w + x]);

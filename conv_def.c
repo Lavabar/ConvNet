@@ -49,7 +49,7 @@ struct kernel *init_kernels(int n_conv_layers, int n_kernels, int kernel_width)
 			goto exit_failure;
 		}
 
-	for (i = 0; i < n_conv_layers; i++) 
+	for (i = 0; i < n_kernels; i++) 
 		res[i].w = kernel_width;
 	/*srand(time(NULL));
 	for (i = 0; i < n_kernels; i++) {
